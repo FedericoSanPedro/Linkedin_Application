@@ -51,22 +51,25 @@ async function scrapeProfile(url) {
     await page.waitForSelector("h1", { timeout: 30000 });
 
     // ----------------------------
-    // GUARDAR HTML PARA DEBUG
+    // GUARDAR HTML PARA DEBUG, SI ES NECESARIO CAMBIAR DEBUG_HTML EN .env
     // ----------------------------
     const html = await page.content();
     console.log("HTML LENGTH:", html.length);
-    fs.writeFileSync("debug.html", html);
-
+    if (process.env.DEBUG_HTML === "true") {
+      fs.writeFileSync("debug.html", html);
+    }
     const $ = cheerio.load(html);
 
     // ----------------------------
     // EXTRACCIÓN DE DATOS
+    // Cada dato sera extraido del debug.html a partir de los selectores CSS que especifica Cheerio y logra conseguir lo requerido
     // ----------------------------
 
     // NAME
     const name = $("h1").first().text().trim();
+        // El name está en h1, por ejemplo
 
-    // HEADLINE — probamos varios selectores
+    // HEADLINE
     const headline =
       $(".pv-text-details__left-panel .text-body-medium").first().text().trim() ||
       $(".pv-text-details__right-panel .text-body-medium").first().text().trim() ||
@@ -78,7 +81,7 @@ async function scrapeProfile(url) {
     .text()
     .trim();
 
-    // ABOUT — selector estable 2025
+    // ABOUT
     function extractAbout($) {
       // Localizar el header About y luego su sección contenedora
       const aboutHeader = $("h2 span[aria-hidden=true]")
@@ -110,7 +113,7 @@ async function scrapeProfile(url) {
     function extractExperiences($) {
       const experiences = [];
     
-      // 1) Encontrar el header "Experience"
+      // Encuentra el header Experience
       const expHeader = $("h2 span[aria-hidden=true]")
         .filter((i, el) => $(el).text().trim() === "Experience")
         .first();
@@ -120,21 +123,21 @@ async function scrapeProfile(url) {
         return [];
       }
     
-      // 2) Encontrar la sección de Experience
+      // Encuentra la sección Experience
       const expSection = expHeader.closest("section");
       if (!expSection.length) {
         console.log("⚠ No se encontró la sección de Experience");
         return [];
       }
     
-      // 3) Encontrar el ul que contiene las experiencias (directamente después del header)
+      // Encuentra el ul que contiene las experiencias (después del header)
       const expList = expSection.find("ul").first();
       if (!expList.length) {
         console.log("⚠ No se encontró la lista de experiencias");
         return [];
       }
     
-      // 4) Cada experiencia está en un <li> con clase artdeco-list__item
+      // Encuentra cada experiencia está en un <li> con clase artdeco-list__item
       const items = expList.find("li.artdeco-list__item");
       if (!items.length) {
         console.log("⚠ No se encontraron items de experiencia");
@@ -144,7 +147,7 @@ async function scrapeProfile(url) {
       items.each((i, el) => {
         const item = $(el);
     
-        // --- Role/Title ---
+        // --- Role ---
         // El rol está en: div.hoverable-link-text.t-bold span[aria-hidden=true]
         const role = item
           .find("div.hoverable-link-text.t-bold span[aria-hidden=true]")
@@ -195,13 +198,13 @@ async function scrapeProfile(url) {
         // La descripción está dentro de pvs-entity__sub-components > div[class*="inline-show-more-text"] > span[aria-hidden=true]
         // El div tiene clases como "inline-show-more-text--is-collapsed"
         let description = "";
-        // Buscar dentro de los sub-componentes de la experiencia primero
+        // Busca dentro de los sub-componentes de la experiencia primero
         const subComponents = item.find("div.pvs-entity__sub-components");
         let descriptionDiv = null;
         if (subComponents.length) {
           descriptionDiv = subComponents.find("div[class*='inline-show-more-text']").first();
         }
-        // Si no se encuentra en sub-components, buscar en todo el item
+        // Si no se encuentra en sub-components, busca en todo el item
         if (!descriptionDiv || !descriptionDiv.length) {
           descriptionDiv = item.find("div[class*='inline-show-more-text']").first();
         }
@@ -209,7 +212,7 @@ async function scrapeProfile(url) {
         if (descriptionDiv && descriptionDiv.length) {
           const descriptionSpan = descriptionDiv.find("span[aria-hidden=true]").first();
           if (descriptionSpan.length) {
-            // Extraer el texto y limpiar espacios múltiples
+            // Extrae el texto y limpia espacios múltiples
             description = descriptionSpan.text()
               .replace(/\s+/g, " ")
               .trim();

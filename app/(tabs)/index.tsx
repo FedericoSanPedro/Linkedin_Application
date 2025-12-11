@@ -8,6 +8,10 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+// ----------------------------
+// Send the url to the server to scrape the profile
+// ----------------------------
+
   const handleScrape = async () => {
     setLoading(true);
     setError("");
@@ -36,6 +40,10 @@ export default function App() {
     }
   };
 
+// ----------------------------
+// Return the result of the scraping
+// ----------------------------
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Scraper de LinkedIn (Demo)</Text>
@@ -63,6 +71,10 @@ export default function App() {
     </ScrollView>
   );
 }
+
+// ----------------------------
+// Styles
+// ----------------------------
 
 const styles = StyleSheet.create({
   container: {
