@@ -10,6 +10,7 @@ And other one in scraper that contains your linkedin user and password.
 3. Update the modules
 
    ```bash
+   npx expo install
    npm install
    ```
 
