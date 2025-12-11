@@ -80,28 +80,27 @@ async function scrapeProfile(url) {
 
     // ABOUT — selector estable 2025
     function extractAbout($) {
-      let aboutText = "";
-
-      // Todas las secciones de LinkedIn se renderizan como <section> con data-view-name
-      const aboutSection = $('section[data-view-name="profile-card"]').nextAll("section")
-        .filter((i, el) => {
-          return $(el).text().toLowerCase().includes("about") ||
-                $(el).text().toLowerCase().includes("acerca") ||
-                $(el).find("div.inline-show-more-text").length > 0;
-        })
+      // Localizar el header About y luego su sección contenedora
+      const aboutHeader = $("h2 span[aria-hidden=true]")
+        .filter((i, el) => $(el).text().trim().toLowerCase() === "about")
         .first();
 
-      if (aboutSection.length) {
-        aboutText = aboutSection
-          .find("span[aria-hidden=true], span.visually-hidden")
-          .map((i, span) => $(span).text())
-          .get()
-          .join(" ")
-          .replace(/\s+/g, " ")
-          .trim();
-      }
+      if (!aboutHeader.length) return "";
 
-      return aboutText;
+      const aboutSection = aboutHeader.closest("section");
+      if (!aboutSection.length) return "";
+
+      // El texto está dentro de un div con clase que contiene "inline-show-more-text"
+      const aboutDiv = aboutSection.find("div[class*='inline-show-more-text']").first();
+      if (!aboutDiv.length) return "";
+
+      const aboutSpan = aboutDiv.find("span[aria-hidden=true]").first();
+      if (!aboutSpan.length) return "";
+
+      return aboutSpan
+        .text()
+        .replace(/\s+/g, " ")
+        .trim();
     }
 
     const about = extractAbout($);
