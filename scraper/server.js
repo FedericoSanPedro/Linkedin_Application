@@ -9,14 +9,55 @@ const app = express();
 app.use(express.json());
 app.use(cors({ origin: "*" }));
 
+
+// ---------------------------------
+// Cargar cookies si existen
+// ---------------------------------
+async function loadCookies(page) {
+  if (fs.existsSync("cookies.json")) {
+    const cookies = JSON.parse(fs.readFileSync("cookies.json", "utf8"));
+    if (cookies.length > 0) {
+      console.log("Cargando cookies guardadas...");
+      await page.setCookie(...cookies);
+    }
+  }
+}
+
+// ---------------------------------
+// Guardar cookies después de login
+// ---------------------------------
+async function saveCookies(page) {
+  const cookies = await page.cookies();
+  fs.writeFileSync("cookies.json", JSON.stringify(cookies, null, 2));
+  console.log("Cookies guardadas.");
+}
+
 // ----------------------------
 // LOGIN A LINKEDIN
 // ----------------------------
+
 async function loginLinkedIn(page) {
-  console.log("Iniciando login...");
+  console.log("Verificando si ya estás logueado...");
+
+  // Primero intentamos entrar directamente al feed
+  await page.goto("https://www.linkedin.com/feed/", {
+    waitUntil: "domcontentloaded",
+    timeout: 45000
+  });
+
+  // Si ya existe la barra → estamos logueados
+  const isLogged = await page.$("#global-nav-search");
+
+  if (isLogged) {
+    console.log("Ya estás logueado. No se requiere login.");
+    return;
+  }
+
+  console.log("No estás logueado, iniciando login manual...");
 
   await page.goto("https://www.linkedin.com/login", {
-    waitUntil: "domcontentloaded"
+    waitUntil: "domcontentloaded",
+    timeout: 45000
   });
 
   await page.type("#username", process.env.LINKEDIN_EMAIL);
@@ -24,11 +65,16 @@ async function loginLinkedIn(page) {
 
   await page.click("button[type=submit]");
 
-  // Esperamos a que aparezca la barra superior (login OK)
+  // Esperar login exitoso
   await page.waitForSelector("#global-nav-search", { timeout: 60000 });
 
-  console.log("Login completado.");
+  console.log("Login exitoso, guardando cookies...");
+
+  await saveCookies(page);
+
+  console.log("Cookies guardadas.");
 }
+
 
 // ----------------------------
 // SCRAPING DEL PERFIL
@@ -40,9 +86,10 @@ async function scrapeProfile(url) {
   });
 
   const page = await browser.newPage();
+  await loadCookies(page);
+  await loginLinkedIn(page);
 
   try {
-    await loginLinkedIn(page);
 
     console.log("Entrando al perfil:", url);
     await page.goto(url, { waitUntil: "domcontentloaded" });

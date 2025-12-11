@@ -40,4 +40,5 @@ And other one in scraper folder that contains your linkedin user and password.
 
 In the future, some fields will be empty because Linkedin developers update the profile´s html code periodically. Therefore, the scraper must be updated accordingly. This can be managed by enabling HTML debugging and analyzing the changes.
 
+There is also a possiblity that the sends you to a Hello World page, just press the index arrow.
 If there is an issue with the default page showing "Welcome to Expo — Start by creating…” it is because of a node version problem. This project was created with version 24 and it worked with versions like 22. Try to update you version to see the index page.
